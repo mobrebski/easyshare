@@ -40,13 +40,14 @@ import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.DocumentModelList;
+import org.nuxeo.ecm.core.api.LifeCycleConstants;
 import org.nuxeo.ecm.core.api.blobholder.BlobHolder;
+import org.nuxeo.ecm.core.api.impl.DocumentModelListImpl;
 import org.nuxeo.ecm.core.api.model.PropertyNotFoundException;
 import org.nuxeo.ecm.platform.ec.notification.email.EmailHelper;
 import org.nuxeo.ecm.webengine.model.WebObject;
 import org.nuxeo.ecm.webengine.model.impl.ModuleRoot;
 import org.nuxeo.runtime.api.Framework;
-
 import org.nuxeo.ecm.core.api.IdRef;
 
 /**
@@ -86,6 +87,13 @@ public class EasyShare extends ModuleRoot {
 
                     DocumentModelList docList = session.getChildren(docRef);
 
+                    final DocumentModelList docListNotInTrash = new DocumentModelListImpl();
+                    for (final DocumentModel docModel : docList) {
+                        if (!LifeCycleConstants.DELETED_STATE.equals(docModel.getCurrentLifeCycleState())) {
+                            docListNotInTrash.add(docModel);
+                        }
+                    }
+
                     // Audit Log
                     OperationContext ctx = new OperationContext(session);
                     ctx.setInput(docFolder);
@@ -103,7 +111,7 @@ public class EasyShare extends ModuleRoot {
                         return getView("denied");
                     }
 
-                    return getView("folderList").arg("docFolder", docFolder).arg("docList", docList);
+                    return getView("folderList").arg("docFolder", docFolder).arg("docList", docListNotInTrash);
                 } else {
 
                     return getView("denied");
